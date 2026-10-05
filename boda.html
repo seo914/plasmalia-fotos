@@ -25,13 +25,30 @@
   .grid img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s; }
   .grid figure:hover img { transform: scale(1.04); }
   .grid a.dl { position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,.55); color: #fff; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; }
+  .badge { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,.55); color: #fff; border-radius: 12px; padding: 3px 8px; font-size: 11px; display: flex; align-items: center; gap: 3px; }
+  .badge .star { color: #f3c969; }
 
-  #lightbox { position: fixed; inset: 0; background: rgba(20,16,20,.95); display: none; align-items: center; justify-content: center; z-index: 50; }
-  #lightbox img { max-width: 92vw; max-height: 85vh; }
-  #lightbox .close, #lightbox .nav { position: absolute; color: #fff; background: none; border: none; font-size: 2rem; cursor: pointer; }
+  #lightbox { position: fixed; inset: 0; background: rgba(20,16,20,.96); display: none; z-index: 50; overflow-y: auto; }
+  #lightbox .top { display: flex; justify-content: center; align-items: center; min-height: 60vh; position: relative; padding: 50px 16px 10px; }
+  #lightbox img { max-width: 92vw; max-height: 70vh; border-radius: 4px; }
+  #lightbox .close, #lightbox .nav { position: absolute; color: #fff; background: none; border: none; font-size: 2rem; cursor: pointer; z-index: 1; }
   #lightbox .close { top: 16px; right: 24px; }
   #lightbox .prev { left: 16px; top: 50%; transform: translateY(-50%); }
   #lightbox .next { right: 16px; top: 50%; transform: translateY(-50%); }
+
+  .panel { max-width: 560px; margin: 0 auto 40px; background: #fff; border-radius: 14px; padding: 20px 22px; color: var(--tinta); }
+  .stars { font-size: 1.8rem; letter-spacing: 4px; text-align: center; cursor: pointer; margin-bottom: 4px; }
+  .stars span { color: #ddd; }
+  .stars span.filled { color: #f3c969; }
+  .avgLine { text-align: center; font-size: .85rem; opacity: .65; margin-bottom: 18px; }
+  .comentarios { max-height: 220px; overflow-y: auto; margin-bottom: 14px; }
+  .comentario { padding: 8px 0; border-bottom: 1px solid #eee; font-size: .9rem; }
+  .comentario b { color: var(--ciruela); }
+  .comentario .fecha { font-size: .7rem; opacity: .5; display: block; }
+  .form-comentario input, .form-comentario textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: .9rem; margin-bottom: 8px; }
+  .form-comentario textarea { resize: vertical; min-height: 50px; }
+  .form-comentario button { width: 100%; background: var(--ciruela); color: #fff; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+  .form-comentario button:hover { background: var(--tinta); }
 
   footer { text-align: center; padding: 32px 16px 64px; }
   footer p { margin: 0 0 16px; }
@@ -52,7 +69,7 @@
 <div id="galeria">
   <header>
     <h1 id="nombreNovios"></h1>
-    <p>Pulsa en cualquier foto para verla en grande, o en el icono de descarga para guardarla.</p>
+    <p>Pulsa en cualquier foto para verla en grande, valorarla con estrellas y dejar un comentario.</p>
   </header>
   <div class="grid" id="grid"></div>
   <footer>
@@ -62,10 +79,24 @@
 </div>
 
 <div id="lightbox">
-  <button class="close">&times;</button>
-  <button class="nav prev">&#8249;</button>
-  <img id="lightboxImg" src="" alt="" />
-  <button class="nav next">&#8250;</button>
+  <div class="top">
+    <button class="close">&times;</button>
+    <button class="nav prev">&#8249;</button>
+    <img id="lightboxImg" src="" alt="" />
+    <button class="nav next">&#8250;</button>
+  </div>
+  <div class="panel">
+    <div class="stars" id="stars">
+      <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+    </div>
+    <div class="avgLine" id="avgLine"></div>
+    <div class="comentarios" id="comentarios"></div>
+    <div class="form-comentario">
+      <input id="comNombre" type="text" placeholder="Tu nombre" maxlength="60" />
+      <textarea id="comTexto" placeholder="Deja un comentario sobre esta foto..." maxlength="500"></textarea>
+      <button id="comEnviar">Comentar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -75,16 +106,32 @@ function slugFromPath() {
 }
 const slug = slugFromPath();
 let photos = [];
+let interacciones = {};
 let current = 0;
 
 async function intentarCargar() {
   const res = await fetch(`/api/fotos?slug=${encodeURIComponent(slug)}`, { credentials: 'include' });
   if (res.ok) {
     const data = await res.json();
+    await cargarInteracciones();
     mostrarGaleria(data);
     return true;
   }
   return false;
+}
+
+async function cargarInteracciones() {
+  const res = await fetch(`/api/interacciones?slug=${encodeURIComponent(slug)}`, { credentials: 'include' });
+  if (res.ok) {
+    const data = await res.json();
+    interacciones = data.porFoto || {};
+  }
+}
+
+function badgeHtml(key) {
+  const info = interacciones[key];
+  if (!info || !info.count) return '';
+  return `<span class="badge"><span class="star">★</span>${info.avg.toFixed(1)} · ${info.count}</span>`;
 }
 
 function mostrarGaleria(data) {
@@ -97,29 +144,101 @@ function mostrarGaleria(data) {
 
   photos = data.photos.map((p) => ({
     filename: p.filename,
+    key: p.thumbKey,
     thumbUrl: `/api/img?slug=${encodeURIComponent(slug)}&key=${encodeURIComponent(p.thumbKey)}`,
     origUrl: `/api/img?slug=${encodeURIComponent(slug)}&key=${encodeURIComponent(p.origKey)}&filename=${encodeURIComponent(p.filename)}`,
   }));
+  pintarGrid();
+}
+
+function pintarGrid() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   photos.forEach((p, i) => {
     const fig = document.createElement('figure');
     fig.innerHTML = `<img src="${p.thumbUrl}" loading="lazy" alt="">` +
+      badgeHtml(p.key) +
       `<a class="dl" href="${p.origUrl}" download title="Descargar">⬇</a>`;
     fig.querySelector('img').addEventListener('click', () => abrirLightbox(i));
     grid.appendChild(fig);
   });
 }
 
+function pintarPanel() {
+  const p = photos[current];
+  const info = interacciones[p.key] || { avg: 0, count: 0, comments: [] };
+
+  document.querySelectorAll('#stars span').forEach((el) => {
+    el.classList.toggle('filled', Number(el.dataset.v) <= Math.round(info.avg));
+  });
+  document.getElementById('avgLine').textContent = info.count
+    ? `${info.avg.toFixed(1)} de media · ${info.count} valoración${info.count === 1 ? '' : 'es'}`
+    : 'Sé el primero en valorar esta foto';
+
+  const cont = document.getElementById('comentarios');
+  if (!info.comments.length) {
+    cont.innerHTML = '<p style="opacity:.5;font-size:.85rem">Aún no hay comentarios.</p>';
+  } else {
+    cont.innerHTML = info.comments
+      .slice().reverse()
+      .map(c => `<div class="comentario"><b>${escapeHtml(c.nombre)}</b><br>${escapeHtml(c.texto)}</div>`)
+      .join('');
+  }
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
 function abrirLightbox(i) {
   current = i;
   document.getElementById('lightboxImg').src = photos[i].origUrl;
-  document.getElementById('lightbox').style.display = 'flex';
+  document.getElementById('lightbox').style.display = 'block';
+  document.getElementById('lightbox').scrollTop = 0;
+  pintarPanel();
 }
 document.querySelector('#lightbox .close').onclick = () => document.getElementById('lightbox').style.display = 'none';
 document.querySelector('#lightbox .prev').onclick = () => abrirLightbox((current - 1 + photos.length) % photos.length);
 document.querySelector('#lightbox .next').onclick = () => abrirLightbox((current + 1) % photos.length);
-document.getElementById('lightbox').addEventListener('click', (e) => { if (e.target.id === 'lightbox') e.target.style.display = 'none'; });
+
+document.getElementById('stars').addEventListener('click', async (e) => {
+  const v = e.target.dataset && e.target.dataset.v;
+  if (!v) return;
+  const key = photos[current].key;
+  const res = await fetch('/api/interacciones', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ slug, foto: key, rating: Number(v) }),
+  });
+  if (res.ok) {
+    const data = await res.json();
+    interacciones[key] = data.foto;
+    pintarPanel();
+    pintarGrid();
+  }
+});
+
+document.getElementById('comEnviar').addEventListener('click', async () => {
+  const nombre = document.getElementById('comNombre').value.trim();
+  const texto = document.getElementById('comTexto').value.trim();
+  if (!nombre || !texto) { alert('Escribe tu nombre y el comentario.'); return; }
+  const key = photos[current].key;
+  const res = await fetch('/api/interacciones', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ slug, foto: key, nombre, texto }),
+  });
+  if (res.ok) {
+    const data = await res.json();
+    interacciones[key] = data.foto;
+    document.getElementById('comTexto').value = '';
+    pintarPanel();
+  }
+});
 
 document.getElementById('entrar').addEventListener('click', async () => {
   const password = document.getElementById('password').value;
