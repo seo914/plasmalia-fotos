@@ -7,7 +7,7 @@ function checkPin(pin) {
 }
 
 export default async (req) => {
-  const store = getStore("galerias");
+  const store = getStore({ name: "galerias", consistency: "strong" });
 
   if (req.method === "GET") {
     const url = new URL(req.url);
@@ -64,6 +64,17 @@ export default async (req) => {
     g.photos = [...(g.photos || []), ...photos];
     await store.setJSON(slug, g);
     return new Response(JSON.stringify({ ok: true, total: g.photos.length }), {
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  if (body.action === "vaciar") {
+    const { slug } = body;
+    const g = await store.get(slug, { type: "json" });
+    if (!g) return new Response(JSON.stringify({ error: "galeria no existe" }), { status: 404 });
+    g.photos = [];
+    await store.setJSON(slug, g);
+    return new Response(JSON.stringify({ ok: true }), {
       headers: { "content-type": "application/json" },
     });
   }

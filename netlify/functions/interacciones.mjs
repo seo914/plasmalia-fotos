@@ -18,7 +18,7 @@ function agregar(datos) {
 }
 
 export default async (req) => {
-  const store = getStore("interacciones");
+  const store = getStore({ name: "interacciones", consistency: "strong" });
   const url = new URL(req.url);
 
   if (req.method === "GET") {
