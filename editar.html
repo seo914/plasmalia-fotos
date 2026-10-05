@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin fotos — Plasmalia</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; color: #2B2530; }
+  h1 { color: #7C3A66; }
+  label { display: block; margin-top: 16px; font-weight: 600; }
+  input, select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+  button { margin-top: 20px; background: #7C3A66; color: #fff; border: none; padding: 12px 24px; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  #log { margin-top: 24px; font-family: monospace; font-size: .85rem; white-space: pre-wrap; background: #f4f1ee; padding: 12px; border-radius: 6px; max-height: 300px; overflow: auto; }
+  #resultado { margin-top: 20px; padding: 16px; background: #f0eafc; border-radius: 8px; display: none; }
+  #resultado a { color: #7C3A66; font-weight: 600; }
+  .galerias { margin-top: 32px; }
+  .galerias table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .galerias td, .galerias th { border-bottom: 1px solid #eee; padding: 6px 4px; text-align: left; }
+</style>
+</head>
+<body>
+
+<h1>Crear galería de boda</h1>
+
+<label>PIN de administrador</label>
+<input id="pin" type="password" autocomplete="off" />
+
+<label>Nombre de los novios (ej: Ana y Luis)</label>
+<input id="nombre" type="text" />
+
+<label>Contraseña para esta boda (se la das a los novios)</label>
+<input id="password" type="text" />
+
+<label>Enlace de reseña de Google (opcional, deja vacío para usar el por defecto)</label>
+<input id="reviewLink" type="url" placeholder="https://g.page/r/..." />
+
+<label>Carpeta de fotos</label>
+<input id="archivos" type="file" multiple accept="image/*" webkitdirectory />
+
+<button id="crear">Crear galería y subir fotos</button>
+
+<div id="resultado"></div>
+<div id="log"></div>
+
+<div class="galerias">
+  <h2>Galerías existentes</h2>
+  <button id="refrescar">Refrescar lista</button>
+  <table id="tablaGalerias"><thead><tr><th>Slug</th><th>Novios</th><th># fotos</th><th>Enlace</th></tr></thead><tbody></tbody></table>
+</div>
+
+<script>
+const log = (msg) => { const el = document.getElementById('log'); el.textContent += msg + '\n'; el.scrollTop = el.scrollHeight; };
+
+function redimensionar(file, maxSize, calidad) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', calidad);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function subirBlob(pin, slug, kind, blob) {
+  const res = await fetch('/api/subir', {
+    method: 'POST',
+    headers: { 'x-pin': pin, 'x-slug': slug, 'x-kind': kind, 'content-type': 'application/octet-stream' },
+    body: blob,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'error subiendo');
+  return data.key;
+}
+
+document.getElementById('crear').addEventListener('click', async () => {
+  const pin = document.getElementById('pin').value;
+  const nombre = document.getElementById('nombre').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const reviewLink = document.getElementById('reviewLink').value.trim();
+  const archivos = Array.from(document.getElementById('archivos').files).filter(f => f.type.startsWith('image/'));
+
+  if (!pin || !nombre || !password || archivos.length === 0) {
+    alert('Rellena PIN, nombre, contraseña y selecciona una carpeta con fotos.');
+    return;
+  }
+
+  const btn = document.getElementById('crear');
+  btn.disabled = true;
+  document.getElementById('log').textContent = '';
+  log(`Creando galería "${nombre}" con ${archivos.length} fotos...`);
+
+  try {
+    const resCrear = await fetch('/api/admin', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ pin, action: 'crear', nombre, password, reviewLink: reviewLink || undefined }),
+    });
+    const dataCrear = await resCrear.json();
+    if (!resCrear.ok) throw new Error(dataCrear.error);
+    const slug = dataCrear.slug;
+    log(`Galería creada: ${slug}`);
+
+    const LOTE = 5;
+    for (let i = 0; i < archivos.length; i += LOTE) {
+      const lote = archivos.slice(i, i + LOTE);
+      const confirmados = [];
+      for (const file of lote) {
+        log(`Procesando ${file.name}...`);
+        const thumbBlob = await redimensionar(file, 500, 0.8);
+        const entregaBlob = await redimensionar(file, 2800, 0.85);
+        log(`Subiendo ${file.name}...`);
+        const thumbKey = await subirBlob(pin, slug, 'thumb', thumbBlob);
+        const origKey = await subirBlob(pin, slug, 'orig', entregaBlob);
+        confirmados.push({ filename: file.name, origKey, thumbKey });
+      }
+
+      await fetch('/api/admin', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ pin, action: 'confirmar', slug, photos: confirmados }),
+      });
+      log(`Lote confirmado (${Math.min(i + LOTE, archivos.length)}/${archivos.length})`);
+    }
+
+    const enlace = `${location.origin}/boda/${slug}`;
+    const r = document.getElementById('resultado');
+    r.style.display = 'block';
+    r.innerHTML = `<p>Galería lista. Pásale esto a Chema:</p>
+      <p>Enlace: <a href="${enlace}" target="_blank">${enlace}</a></p>
+      <p>Contraseña: <strong>${password}</strong></p>`;
+    log('Listo.');
+  } catch (e) {
+    log('ERROR: ' + e.message);
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('refrescar').addEventListener('click', async () => {
+  const pin = document.getElementById('pin').value;
+  if (!pin) { alert('Introduce el PIN primero'); return; }
+  const res = await fetch(`/api/admin?pin=${encodeURIComponent(pin)}`);
+  const data = await res.json();
+  if (!res.ok) { alert(data.error); return; }
+  const tbody = document.querySelector('#tablaGalerias tbody');
+  tbody.innerHTML = '';
+  data.galerias.forEach(g => {
+    const tr = document.createElement('tr');
+    const enlace = `${location.origin}/boda/${g.slug}`;
+    tr.innerHTML = `<td>${g.slug}</td><td>${g.nombre || ''}</td><td>${g.numFotos}</td><td><a href="${enlace}" target="_blank">abrir</a></td>`;
+    tbody.appendChild(tr);
+  });
+});
+</script>
+</body>
+</html>

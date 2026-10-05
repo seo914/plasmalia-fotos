@@ -1,0 +1,8 @@
+[build]
+publish = "."
+functions = "netlify/functions"
+
+[[redirects]]
+from = "/boda/*"
+to = "/boda.html"
+status = 200
