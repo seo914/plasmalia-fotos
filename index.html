@@ -5,34 +5,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
 <title>Tus fotografías — Plasmalia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <style>
-  :root { --ciruela: #7C3A66; --tinta: #2B2530; --crema: #F7F4F1; }
+  :root {
+    --ink: #1f1a21;
+    --ink-soft: #6b6470;
+    --plum: #7C3A66;
+    --line: #e8e3e0;
+    --paper: #fbf9f7;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Jost', Arial, sans-serif; background: var(--crema); color: var(--tinta); }
-  .card { max-width: 380px; width: 100%; margin: 24px; padding: 40px 32px; text-align: center; background: #fff; border-radius: 16px; box-shadow: 0 10px 40px rgba(43,37,48,.08); }
-  h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.9rem; margin: 0 0 8px; color: var(--ciruela); }
-  p.sub { margin: 0 0 28px; opacity: .7; font-size: .95rem; }
-  label { display: block; text-align: left; font-size: .85rem; font-weight: 600; margin: 0 0 6px; }
-  input { width: 100%; padding: 12px 14px; font-size: 1rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 18px; font-family: inherit; }
-  button { width: 100%; background: var(--ciruela); color: #fff; border: none; padding: 13px; border-radius: 8px; font-size: 1rem; cursor: pointer; font-family: inherit; }
-  button:hover { background: var(--tinta); }
-  button:disabled { opacity: .6; cursor: default; }
-  #error { color: #b00; font-size: .88rem; min-height: 1.2em; margin-top: -8px; margin-bottom: 10px; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Jost', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .card { max-width: 400px; width: 100%; margin: 24px; padding: 56px 40px; text-align: center; }
+  .mark { font-family: 'Cormorant Garamond', serif; font-size: .8rem; letter-spacing: .32em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 28px; }
+  h1 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 2.6rem; line-height: 1.1; margin: 0 0 14px; color: var(--ink); }
+  p.sub { margin: 0 0 40px; color: var(--ink-soft); font-size: .95rem; line-height: 1.6; font-weight: 300; }
+  label { display: block; text-align: left; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 500; color: var(--ink-soft); margin: 0 0 8px; }
+  .field { margin-bottom: 24px; }
+  input {
+    width: 100%; padding: 13px 2px; font-size: 1.05rem; font-family: 'Jost', sans-serif; font-weight: 300;
+    border: none; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink);
+    transition: border-color .25s;
+  }
+  input:focus { outline: none; border-bottom-color: var(--plum); }
+  button {
+    width: 100%; background: var(--ink); color: #fff; border: none; padding: 16px; border-radius: 2px;
+    font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: 'Jost', sans-serif;
+    margin-top: 12px; transition: background .25s, transform .15s;
+  }
+  button:hover { background: var(--plum); }
+  button:active { transform: scale(.98); }
+  button:disabled { opacity: .5; cursor: default; }
+  #error { color: #a33; font-size: .82rem; min-height: 1.2em; margin: 6px 0 0; text-align: left; }
 </style>
 </head>
 <body>
 
 <div class="card">
+  <div class="mark">Plasmalia</div>
   <h1>Tus fotografías</h1>
-  <p class="sub">Escribe el nombre que te ha dado Plasmalia y la contraseña para ver y descargar tus fotos.</p>
+  <p class="sub">Escribe vuestro nombre y la contraseña que os ha dado Plasmalia para ver y descargar las fotografías de vuestra boda.</p>
 
   <form id="form">
-    <label for="nombre">Nombre de los novios</label>
-    <input id="nombre" type="text" placeholder="Ej: Ana y Luis" autocomplete="off" />
-
-    <label for="password">Contraseña</label>
-    <input id="password" type="password" autocomplete="off" />
-
+    <div class="field">
+      <label for="nombre">Nombre de los novios</label>
+      <input id="nombre" type="text" placeholder="Ana y Luis" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="password">Contraseña</label>
+      <input id="password" type="password" autocomplete="off" />
+    </div>
     <div id="error"></div>
     <button type="submit">Ver mis fotografías</button>
   </form>
@@ -62,7 +94,7 @@ document.getElementById('form').addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (!res.ok) {
-      err.textContent = data.error || 'No encontramos tu galería.';
+      err.textContent = data.error || 'No encontramos vuestra galería.';
       btn.disabled = false;
       return;
     }

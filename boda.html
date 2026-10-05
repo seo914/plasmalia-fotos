@@ -5,76 +5,130 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
 <title>Tus fotografías — Plasmalia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <style>
-  :root { --ciruela: #7C3A66; --tinta: #2B2530; --crema: #F7F4F1; }
+  :root {
+    --ink: #1f1a21;
+    --ink-soft: #6b6470;
+    --plum: #7C3A66;
+    --line: #e8e3e0;
+    --paper: #fbf9f7;
+    --gold: #c9a35a;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: 'Jost', Arial, sans-serif; background: var(--crema); color: var(--tinta); }
-  header { text-align: center; padding: 48px 16px 24px; }
-  header h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 2rem; margin: 0 0 8px; color: var(--ciruela); }
-  header p { margin: 0; opacity: .7; }
+  body {
+    margin: 0; font-family: 'Jost', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--paper); color: var(--ink); -webkit-font-smoothing: antialiased;
+  }
 
-  #gate { max-width: 360px; margin: 10vh auto; padding: 32px; text-align: center; }
-  #gate input { width: 100%; padding: 12px 14px; font-size: 1rem; border: 1px solid #ddd; border-radius: 8px; margin: 16px 0 8px; }
-  #gate button, .btn { background: var(--ciruela); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1rem; cursor: pointer; }
-  #gate button:hover, .btn:hover { background: var(--tinta); }
-  #gateError { color: #b00; font-size: .9rem; min-height: 1.2em; }
+  /* ---- gate ---- */
+  #gate { max-width: 400px; margin: 14vh auto; padding: 24px; text-align: center; }
+  #gate .mark { font-family: 'Cormorant Garamond', serif; font-size: .8rem; letter-spacing: .32em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 20px; }
+  #gate h1 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 2.3rem; margin: 0 0 14px; }
+  #gate p { color: var(--ink-soft); font-size: .92rem; font-weight: 300; margin: 0 0 32px; }
+  #gate input { width: 100%; padding: 13px 2px; font-size: 1.05rem; font-family: inherit; font-weight: 300; border: none; border-bottom: 1px solid var(--line); background: transparent; margin-bottom: 18px; }
+  #gate input:focus { outline: none; border-bottom-color: var(--plum); }
+  .btn { background: var(--ink); color: #fff; border: none; padding: 15px 28px; border-radius: 2px; font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: inherit; transition: background .25s; }
+  .btn:hover { background: var(--plum); }
+  #gateError { color: #a33; font-size: .85rem; min-height: 1.2em; margin-bottom: 8px; }
 
+  /* ---- header ---- */
   #galeria { display: none; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; padding: 0 16px 48px; max-width: 1400px; margin: 0 auto; }
-  .grid figure { margin: 0; position: relative; aspect-ratio: 3/2; overflow: hidden; border-radius: 6px; cursor: pointer; background: #e9e4e0; }
-  .grid img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s; }
-  .grid figure:hover img { transform: scale(1.04); }
-  .grid a.dl { position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,.55); color: #fff; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; }
-  .badge { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,.55); color: #fff; border-radius: 12px; padding: 3px 8px; font-size: 11px; display: flex; align-items: center; gap: 3px; }
-  .badge .star { color: #f3c969; }
+  header.hero { text-align: center; padding: 90px 24px 56px; }
+  header.hero .mark { font-family: 'Cormorant Garamond', serif; font-size: .78rem; letter-spacing: .32em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 20px; }
+  header.hero h1 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: clamp(2.4rem, 6vw, 3.6rem); margin: 0 0 16px; letter-spacing: .01em; }
+  header.hero p { color: var(--ink-soft); font-size: .95rem; font-weight: 300; max-width: 480px; margin: 0 auto; }
 
-  #lightbox { position: fixed; inset: 0; background: rgba(20,16,20,.96); display: none; z-index: 50; overflow-y: auto; }
-  #lightbox .top { display: flex; justify-content: center; align-items: center; min-height: 60vh; position: relative; padding: 50px 16px 10px; }
-  #lightbox img { max-width: 92vw; max-height: 70vh; border-radius: 4px; }
-  #lightbox .close, #lightbox .nav { position: absolute; color: #fff; background: none; border: none; font-size: 2rem; cursor: pointer; z-index: 1; }
-  #lightbox .close { top: 16px; right: 24px; }
-  #lightbox .prev { left: 16px; top: 50%; transform: translateY(-50%); }
-  #lightbox .next { right: 16px; top: 50%; transform: translateY(-50%); }
+  /* ---- grid ---- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 3px; max-width: 1600px; margin: 0 auto; padding: 0 3px 80px; }
+  .grid figure { margin: 0; position: relative; aspect-ratio: 4/3; overflow: hidden; cursor: pointer; background: #ece7e3; }
+  .grid img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+  .grid figure:hover img { transform: scale(1.045); }
+  .grid figure::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.35), transparent 40%); opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .grid figure:hover::after { opacity: 1; }
+  .grid a.dl { position: absolute; bottom: 10px; right: 10px; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: center; text-decoration: none; opacity: 0; transform: translateY(4px); transition: opacity .25s, transform .25s; }
+  .grid figure:hover a.dl { opacity: 1; transform: translateY(0); }
+  .grid a.dl svg { width: 15px; height: 15px; stroke: var(--ink); }
+  .badge { position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,.92); border-radius: 20px; padding: 4px 10px; font-size: 11px; display: flex; align-items: center; gap: 4px; font-weight: 500; opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s; }
+  .grid figure:hover .badge { opacity: 1; transform: translateY(0); }
+  .badge svg { width: 11px; height: 11px; fill: var(--gold); }
 
-  .panel { max-width: 560px; margin: 0 auto 40px; background: #fff; border-radius: 14px; padding: 20px 22px; color: var(--tinta); }
-  .stars { font-size: 1.8rem; letter-spacing: 4px; text-align: center; cursor: pointer; margin-bottom: 4px; }
-  .stars span { color: #ddd; }
-  .stars span.filled { color: #f3c969; }
-  .avgLine { text-align: center; font-size: .85rem; opacity: .65; margin-bottom: 18px; }
-  .comentarios { max-height: 220px; overflow-y: auto; margin-bottom: 14px; }
-  .comentario { padding: 8px 0; border-bottom: 1px solid #eee; font-size: .9rem; }
-  .comentario b { color: var(--ciruela); }
-  .comentario .fecha { font-size: .7rem; opacity: .5; display: block; }
-  .form-comentario input, .form-comentario textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: .9rem; margin-bottom: 8px; }
-  .form-comentario textarea { resize: vertical; min-height: 50px; }
-  .form-comentario button { width: 100%; background: var(--ciruela); color: #fff; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-family: inherit; }
-  .form-comentario button:hover { background: var(--tinta); }
+  /* ---- lightbox ---- */
+  #lightbox { position: fixed; inset: 0; background: rgba(15,12,16,.97); display: none; z-index: 50; overflow-y: auto; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  #lightbox .top { display: flex; justify-content: center; align-items: center; min-height: 62vh; position: relative; padding: 60px 20px 16px; }
+  #lightbox img { max-width: 90vw; max-height: 72vh; border-radius: 3px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+  #lightbox .close, #lightbox .nav { position: absolute; color: rgba(255,255,255,.75); background: none; border: none; font-size: 1.8rem; cursor: pointer; z-index: 1; font-weight: 300; transition: color .2s; line-height: 1; }
+  #lightbox .close:hover, #lightbox .nav:hover { color: #fff; }
+  #lightbox .close { top: 24px; right: 28px; font-size: 1.5rem; }
+  #lightbox .prev { left: 20px; top: 50%; transform: translateY(-50%); font-size: 2.4rem; }
+  #lightbox .next { right: 20px; top: 50%; transform: translateY(-50%); font-size: 2.4rem; }
 
-  footer { text-align: center; padding: 32px 16px 64px; }
-  footer p { margin: 0 0 16px; }
-  .review-btn { display: inline-block; background: #fff; border: 2px solid var(--ciruela); color: var(--ciruela); padding: 14px 28px; border-radius: 30px; text-decoration: none; font-weight: 600; }
-  .review-btn:hover { background: var(--ciruela); color: #fff; }
+  .panel { max-width: 520px; margin: 0 auto 60px; background: rgba(255,255,255,.97); border-radius: 12px; padding: 28px 28px 24px; color: var(--ink); }
+  .stars { display: flex; justify-content: center; gap: 6px; margin-bottom: 8px; cursor: pointer; }
+  .stars svg { width: 24px; height: 24px; stroke: var(--gold); stroke-width: 1.3; fill: none; transition: fill .15s; }
+  .stars svg.filled { fill: var(--gold); }
+  .avgLine { text-align: center; font-size: .8rem; color: var(--ink-soft); margin-bottom: 24px; font-weight: 300; }
+  .comentarios { max-height: 220px; overflow-y: auto; margin-bottom: 18px; }
+  .comentario { padding: 12px 0; border-bottom: 1px solid var(--line); font-size: .88rem; font-weight: 300; line-height: 1.5; }
+  .comentario:last-child { border-bottom: none; }
+  .comentario b { font-weight: 500; color: var(--plum); }
+  .comentario .fecha { font-size: .68rem; opacity: .45; display: block; margin-top: 2px; }
+  .vacio-comentarios { font-size: .85rem; color: var(--ink-soft); font-weight: 300; text-align: center; padding: 8px 0; }
+  .form-comentario input, .form-comentario textarea {
+    width: 100%; padding: 11px 2px; border: none; border-bottom: 1px solid var(--line); background: transparent;
+    font-family: inherit; font-size: .9rem; font-weight: 300; margin-bottom: 14px; color: var(--ink);
+  }
+  .form-comentario input:focus, .form-comentario textarea:focus { outline: none; border-bottom-color: var(--plum); }
+  .form-comentario textarea { resize: none; min-height: 44px; }
+  .form-comentario button {
+    width: 100%; background: var(--ink); color: #fff; border: none; padding: 13px; border-radius: 2px;
+    cursor: pointer; font-family: inherit; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; transition: background .2s;
+  }
+  .form-comentario button:hover { background: var(--plum); }
+
+  /* ---- footer ---- */
+  footer { text-align: center; padding: 70px 24px 100px; border-top: 1px solid var(--line); margin-top: 20px; }
+  footer p { margin: 0 0 28px; color: var(--ink-soft); font-size: .92rem; font-weight: 300; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .review-btn {
+    display: inline-flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--ink); color: var(--ink);
+    padding: 14px 30px; border-radius: 2px; text-decoration: none; font-size: .82rem; letter-spacing: .06em; text-transform: uppercase;
+    transition: background .25s, color .25s;
+  }
+  .review-btn:hover { background: var(--ink); color: #fff; }
+  .review-btn svg { width: 15px; height: 15px; fill: var(--gold); }
+
+  @media (max-width: 640px) {
+    header.hero { padding: 64px 20px 40px; }
+    .panel { margin-left: 14px; margin-right: 14px; padding: 22px 20px; }
+  }
 </style>
 </head>
 <body>
 
 <div id="gate">
-  <h1 style="font-family:'Cormorant Garamond',Georgia,serif;color:var(--ciruela)">Tus fotografías</h1>
-  <p>Introduce la contraseña que te ha dado Plasmalia para ver y descargar tus fotos.</p>
+  <div class="mark">Plasmalia</div>
+  <h1>Tus fotografías</h1>
+  <p>Introduce la contraseña que os ha dado Plasmalia para ver y descargar vuestras fotos.</p>
   <input id="password" type="password" placeholder="Contraseña" autocomplete="off" />
   <div id="gateError"></div>
   <button id="entrar" class="btn">Entrar</button>
 </div>
 
 <div id="galeria">
-  <header>
+  <header class="hero">
+    <div class="mark">Plasmalia</div>
     <h1 id="nombreNovios"></h1>
-    <p>Pulsa en cualquier foto para verla en grande, valorarla con estrellas y dejar un comentario.</p>
+    <p>Pulsa en cualquier fotografía para verla en grande, valorarla y dejar un comentario.</p>
   </header>
   <div class="grid" id="grid"></div>
   <footer>
-    <p>¿Te han gustado tus fotografías? Una reseña tuya nos ayuda muchísimo a seguir contando historias de boda.</p>
-    <a id="reviewBtn" class="review-btn" href="#" target="_blank" rel="noopener">⭐ Déjanos una reseña en Google</a>
+    <p>¿Os han gustado vuestras fotografías? Una reseña vuestra nos ayuda muchísimo a seguir contando historias de boda.</p>
+    <a id="reviewBtn" class="review-btn" href="#" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3L21.5 9l-4.8 4.6L17.9 21 12 17.6 6.1 21l1.2-7.4L2.5 9l6.6-.7L12 2z"/></svg>
+      Dejar una reseña en Google
+    </a>
   </footer>
 </div>
 
@@ -86,9 +140,7 @@
     <button class="nav next">&#8250;</button>
   </div>
   <div class="panel">
-    <div class="stars" id="stars">
-      <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
-    </div>
+    <div class="stars" id="stars"></div>
     <div class="avgLine" id="avgLine"></div>
     <div class="comentarios" id="comentarios"></div>
     <div class="form-comentario">
@@ -100,6 +152,11 @@
 </div>
 
 <script>
+const STAR_PATH = 'M12 2.5l2.9 6.5 7.1.7-5.4 4.9 1.5 7-6.1-3.7-6.1 3.7 1.5-7-5.4-4.9 7.1-.7z';
+document.getElementById('stars').innerHTML = [1,2,3,4,5].map(v =>
+  `<svg data-v="${v}" viewBox="0 0 24 24"><path d="${STAR_PATH}"/></svg>`
+).join('');
+
 function slugFromPath() {
   const parts = location.pathname.split('/').filter(Boolean);
   return parts[parts.length - 1] || '';
@@ -131,7 +188,7 @@ async function cargarInteracciones() {
 function badgeHtml(key) {
   const info = interacciones[key];
   if (!info || !info.count) return '';
-  return `<span class="badge"><span class="star">★</span>${info.avg.toFixed(1)} · ${info.count}</span>`;
+  return `<span class="badge"><svg viewBox="0 0 24 24"><path d="${STAR_PATH}"/></svg>${info.avg.toFixed(1)}</span>`;
 }
 
 function mostrarGaleria(data) {
@@ -158,7 +215,7 @@ function pintarGrid() {
     const fig = document.createElement('figure');
     fig.innerHTML = `<img src="${p.thumbUrl}" loading="lazy" alt="">` +
       badgeHtml(p.key) +
-      `<a class="dl" href="${p.origUrl}" download title="Descargar">⬇</a>`;
+      `<a class="dl" href="${p.origUrl}" download title="Descargar"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg></a>`;
     fig.querySelector('img').addEventListener('click', () => abrirLightbox(i));
     grid.appendChild(fig);
   });
@@ -168,7 +225,7 @@ function pintarPanel() {
   const p = photos[current];
   const info = interacciones[p.key] || { avg: 0, count: 0, comments: [] };
 
-  document.querySelectorAll('#stars span').forEach((el) => {
+  document.querySelectorAll('#stars svg').forEach((el) => {
     el.classList.toggle('filled', Number(el.dataset.v) <= Math.round(info.avg));
   });
   document.getElementById('avgLine').textContent = info.count
@@ -177,11 +234,11 @@ function pintarPanel() {
 
   const cont = document.getElementById('comentarios');
   if (!info.comments.length) {
-    cont.innerHTML = '<p style="opacity:.5;font-size:.85rem">Aún no hay comentarios.</p>';
+    cont.innerHTML = '<p class="vacio-comentarios">Aún no hay comentarios en esta foto.</p>';
   } else {
     cont.innerHTML = info.comments
       .slice().reverse()
-      .map(c => `<div class="comentario"><b>${escapeHtml(c.nombre)}</b><br>${escapeHtml(c.texto)}</div>`)
+      .map(c => `<div class="comentario"><b>${escapeHtml(c.nombre)}</b> — ${escapeHtml(c.texto)}</div>`)
       .join('');
   }
 }
@@ -204,8 +261,9 @@ document.querySelector('#lightbox .prev').onclick = () => abrirLightbox((current
 document.querySelector('#lightbox .next').onclick = () => abrirLightbox((current + 1) % photos.length);
 
 document.getElementById('stars').addEventListener('click', async (e) => {
-  const v = e.target.dataset && e.target.dataset.v;
-  if (!v) return;
+  const el = e.target.closest('svg');
+  if (!el) return;
+  const v = el.dataset.v;
   const key = photos[current].key;
   const res = await fetch('/api/interacciones', {
     method: 'POST',

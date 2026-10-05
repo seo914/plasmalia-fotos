@@ -47,7 +47,7 @@
 <div class="galerias">
   <h2>Galerías existentes</h2>
   <button id="refrescar">Refrescar lista</button>
-  <table id="tablaGalerias"><thead><tr><th>Slug</th><th>Novios</th><th># fotos</th><th>Enlace</th></tr></thead><tbody></tbody></table>
+  <table id="tablaGalerias"><thead><tr><th>Slug</th><th>Novios</th><th># fotos</th><th>Enlace</th><th>Reseña</th></tr></thead><tbody></tbody></table>
 </div>
 
 <script>
@@ -156,9 +156,25 @@ document.getElementById('refrescar').addEventListener('click', async () => {
   data.galerias.forEach(g => {
     const tr = document.createElement('tr');
     const enlace = `${location.origin}/boda/${g.slug}`;
-    tr.innerHTML = `<td>${g.slug}</td><td>${g.nombre || ''}</td><td>${g.numFotos}</td><td><a href="${enlace}" target="_blank">abrir</a></td>`;
+    tr.innerHTML = `<td>${g.slug}</td><td>${g.nombre || ''}</td><td>${g.numFotos}</td><td><a href="${enlace}" target="_blank">abrir</a></td><td><button data-slug="${g.slug}" class="editarResena">Editar reseña</button></td>`;
     tbody.appendChild(tr);
   });
+});
+
+document.querySelector('#tablaGalerias').addEventListener('click', async (e) => {
+  if (!e.target.classList.contains('editarResena')) return;
+  const pin = document.getElementById('pin').value;
+  if (!pin) { alert('Introduce el PIN primero'); return; }
+  const slug = e.target.dataset.slug;
+  const reviewLink = prompt('Pega el enlace de reseña de Google para esta galería:');
+  if (reviewLink === null) return;
+  const res = await fetch('/api/admin', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ pin, action: 'actualizar', slug, reviewLink }),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(data.error); return; }
+  alert('Enlace de reseña actualizado.');
 });
 </script>
 </body>
