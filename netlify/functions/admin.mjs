@@ -1,18 +1,9 @@
 import { getStore } from "@netlify/blobs";
-import { hashPassword } from "./_token.mjs";
+import { hashPassword, slugify } from "./_token.mjs";
 
 function checkPin(pin) {
   const real = Netlify.env.get("FOTOS_ADMIN_PIN");
   return real && pin === real;
-}
-
-function slugify(s) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
 
 export default async (req) => {

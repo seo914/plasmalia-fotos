@@ -39,3 +39,12 @@ export function checkPassword(password, stored) {
 export function cookieName(slug) {
   return `pl_fotos_${slug}`;
 }
+
+export function slugify(s) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
