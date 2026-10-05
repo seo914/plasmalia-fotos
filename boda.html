@@ -34,18 +34,26 @@
   .btn:hover { background: var(--plum); }
   #gateError { color: #a33; font-size: .85rem; min-height: 1.2em; margin-bottom: 8px; }
 
-  /* ---- header ---- */
+  /* ---- hero slideshow ---- */
   #galeria { display: none; }
-  header.hero { text-align: center; padding: 90px 24px 56px; }
-  header.hero .mark { font-family: 'Cormorant Garamond', serif; font-size: .78rem; letter-spacing: .32em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 20px; }
-  header.hero h1 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: clamp(2.4rem, 6vw, 3.6rem); margin: 0 0 16px; letter-spacing: .01em; }
-  header.hero p { color: var(--ink-soft); font-size: .95rem; font-weight: 300; max-width: 480px; margin: 0 auto; }
+  .hero-slideshow { position: relative; height: 72vh; min-height: 420px; max-height: 760px; overflow: hidden; background: #15111a; }
+  .hero-slideshow .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.6s ease; }
+  .hero-slideshow .slide.active { opacity: 1; }
+  .hero-slideshow .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hero-overlay {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; color: #fff; background: linear-gradient(to bottom, rgba(10,8,12,.22), rgba(10,8,12,.52));
+    padding: 24px;
+  }
+  .hero-overlay .mark { font-family: 'Cormorant Garamond', serif; font-size: .8rem; letter-spacing: .36em; text-transform: uppercase; opacity: .85; margin-bottom: 22px; }
+  .hero-overlay h1 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: clamp(2.6rem, 7vw, 4.2rem); margin: 0; letter-spacing: .01em; text-shadow: 0 2px 30px rgba(0,0,0,.25); }
+  .intro { text-align: center; color: var(--ink-soft); font-size: .92rem; font-weight: 300; max-width: 480px; margin: 48px auto 40px; padding: 0 24px; }
 
-  /* ---- grid ---- */
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 3px; max-width: 1600px; margin: 0 auto; padding: 0 3px 80px; }
-  .grid figure { margin: 0; position: relative; aspect-ratio: 4/3; overflow: hidden; cursor: pointer; background: #ece7e3; }
-  .grid img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.2,.8,.2,1); }
-  .grid figure:hover img { transform: scale(1.045); }
+  /* ---- grid (masonry editorial) ---- */
+  .grid { columns: 4 280px; column-gap: 3px; max-width: 1600px; margin: 0 auto; padding: 0 3px 80px; }
+  .grid figure { margin: 0 0 3px; position: relative; overflow: hidden; cursor: pointer; background: #ece7e3; break-inside: avoid; display: inline-block; width: 100%; }
+  .grid img { width: 100%; height: auto; display: block; transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+  .grid figure:hover img { transform: scale(1.03); }
   .grid figure::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.35), transparent 40%); opacity: 0; transition: opacity .3s; pointer-events: none; }
   .grid figure:hover::after { opacity: 1; }
   .grid a.dl { position: absolute; bottom: 10px; right: 10px; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: center; text-decoration: none; opacity: 0; transform: translateY(4px); transition: opacity .25s, transform .25s; }
@@ -100,7 +108,7 @@
   .review-btn svg { width: 15px; height: 15px; fill: var(--gold); }
 
   @media (max-width: 640px) {
-    header.hero { padding: 64px 20px 40px; }
+    .hero-slideshow { height: 52vh; min-height: 320px; }
     .panel { margin-left: 14px; margin-right: 14px; padding: 22px 20px; }
   }
 </style>
@@ -117,11 +125,13 @@
 </div>
 
 <div id="galeria">
-  <header class="hero">
-    <div class="mark">Plasmalia</div>
-    <h1 id="nombreNovios"></h1>
-    <p>Pulsa en cualquier fotografía para verla en grande, valorarla y dejar un comentario.</p>
-  </header>
+  <div class="hero-slideshow" id="heroSlideshow">
+    <div class="hero-overlay">
+      <div class="mark">Plasmalia</div>
+      <h1 id="nombreNovios"></h1>
+    </div>
+  </div>
+  <p class="intro">Pulsa en cualquier fotografía para verla en grande, valorarla y dejar un comentario.</p>
   <div class="grid" id="grid"></div>
   <footer>
     <p>¿Os han gustado vuestras fotografías? Una reseña vuestra nos ayuda muchísimo a seguir contando historias de boda.</p>
@@ -205,7 +215,32 @@ function mostrarGaleria(data) {
     thumbUrl: `/api/img?slug=${encodeURIComponent(slug)}&key=${encodeURIComponent(p.thumbKey)}`,
     origUrl: `/api/img?slug=${encodeURIComponent(slug)}&key=${encodeURIComponent(p.origKey)}&filename=${encodeURIComponent(p.filename)}`,
   }));
+  pintarHero();
   pintarGrid();
+}
+
+function pintarHero() {
+  const cont = document.getElementById('heroSlideshow');
+  const overlay = cont.querySelector('.hero-overlay');
+  const n = Math.min(10, photos.length);
+  if (n === 0) return;
+  const paso = photos.length / n;
+  for (let i = 0; i < n; i++) {
+    const p = photos[Math.floor(i * paso)];
+    const div = document.createElement('div');
+    div.className = 'slide' + (i === 0 ? ' active' : '');
+    div.innerHTML = `<img src="${p.origUrl}" alt="">`;
+    cont.insertBefore(div, overlay);
+  }
+  const slides = cont.querySelectorAll('.slide');
+  if (slides.length > 1) {
+    let idx = 0;
+    setInterval(() => {
+      slides[idx].classList.remove('active');
+      idx = (idx + 1) % slides.length;
+      slides[idx].classList.add('active');
+    }, 4500);
+  }
 }
 
 function pintarGrid() {
