@@ -71,6 +71,58 @@ function redimensionar(file, maxSize, calidad) {
   });
 }
 
+async function fechaCapturaExif(file) {
+  try {
+    const buf = await file.slice(0, 131072).arrayBuffer();
+    const view = new DataView(buf);
+    if (view.getUint16(0) !== 0xffd8) return null;
+    let offset = 2;
+    while (offset < view.byteLength - 4) {
+      const marker = view.getUint16(offset);
+      if (marker === 0xffe1) {
+        const exifStart = offset + 4;
+        if (view.getUint32(exifStart) !== 0x45786966) return null; // "Exif"
+        const tiffStart = exifStart + 6;
+        const little = view.getUint16(tiffStart) === 0x4949;
+        const get16 = (o) => view.getUint16(o, little);
+        const get32 = (o) => view.getUint32(o, little);
+        const ifd0 = tiffStart + get32(tiffStart + 4);
+        const numEntries = get16(ifd0);
+        let exifIfdPointer = null;
+        for (let i = 0; i < numEntries; i++) {
+          const entry = ifd0 + 2 + i * 12;
+          if (get16(entry) === 0x8769) exifIfdPointer = tiffStart + get32(entry + 8);
+        }
+        if (!exifIfdPointer) return null;
+        const numExif = get16(exifIfdPointer);
+        for (let i = 0; i < numExif; i++) {
+          const entry = exifIfdPointer + 2 + i * 12;
+          if (get16(entry) === 0x9003) {
+            const valueOffset = tiffStart + get32(entry + 8);
+            let str = '';
+            for (let j = 0; j < 19; j++) str += String.fromCharCode(view.getUint8(valueOffset + j));
+            return str; // "YYYY:MM:DD HH:MM:SS"
+          }
+        }
+        return null;
+      }
+      if ((marker & 0xff00) !== 0xff00) break;
+      offset += 2 + view.getUint16(offset + 2);
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
+async function ordenarPorFechaCaptura(archivos) {
+  const conFecha = await Promise.all(
+    archivos.map(async (f) => ({ file: f, fecha: (await fechaCapturaExif(f)) || '9999' }))
+  );
+  conFecha.sort((a, b) => a.fecha.localeCompare(b.fecha));
+  return conFecha.map((x) => x.file);
+}
+
 async function subirBlob(pin, slug, kind, blob) {
   const res = await fetch('/api/subir', {
     method: 'POST',
@@ -100,6 +152,9 @@ document.getElementById('crear').addEventListener('click', async () => {
   log(`Creando galería "${nombre}" con ${archivos.length} fotos...`);
 
   try {
+    log('Leyendo fecha de captura de cada foto para ordenarlas cronológicamente...');
+    const archivosOrdenados = await ordenarPorFechaCaptura(archivos);
+
     const resCrear = await fetch('/api/admin', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ pin, action: 'crear', nombre, password, reviewLink: reviewLink || undefined }),
@@ -110,8 +165,8 @@ document.getElementById('crear').addEventListener('click', async () => {
     log(`Galería creada: ${slug}`);
 
     const LOTE = 5;
-    for (let i = 0; i < archivos.length; i += LOTE) {
-      const lote = archivos.slice(i, i + LOTE);
+    for (let i = 0; i < archivosOrdenados.length; i += LOTE) {
+      const lote = archivosOrdenados.slice(i, i + LOTE);
       const confirmados = [];
       for (const file of lote) {
         log(`Procesando ${file.name}...`);
@@ -127,7 +182,7 @@ document.getElementById('crear').addEventListener('click', async () => {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ pin, action: 'confirmar', slug, photos: confirmados }),
       });
-      log(`Lote confirmado (${Math.min(i + LOTE, archivos.length)}/${archivos.length})`);
+      log(`Lote confirmado (${Math.min(i + LOTE, archivosOrdenados.length)}/${archivosOrdenados.length})`);
     }
 
     const enlace = `${location.origin}/boda/${slug}`;

@@ -77,7 +77,14 @@
   .stars { display: flex; justify-content: center; gap: 6px; margin-bottom: 8px; cursor: pointer; }
   .stars svg { width: 24px; height: 24px; stroke: var(--gold); stroke-width: 1.3; fill: none; transition: fill .15s; }
   .stars svg.filled { fill: var(--gold); }
-  .avgLine { text-align: center; font-size: .8rem; color: var(--ink-soft); margin-bottom: 24px; font-weight: 300; }
+  .avgLine { text-align: center; font-size: .8rem; color: var(--ink-soft); margin-bottom: 20px; font-weight: 300; }
+  .whatsapp-cta {
+    display: flex; align-items: center; justify-content: center; gap: 9px; text-decoration: none;
+    background: #25D366; color: #fff; padding: 13px 18px; border-radius: 30px; font-size: .85rem; font-weight: 500;
+    margin-bottom: 22px; transition: filter .2s;
+  }
+  .whatsapp-cta:hover { filter: brightness(1.06); }
+  .whatsapp-cta svg { width: 18px; height: 18px; fill: #fff; flex-shrink: 0; }
   .comentarios { max-height: 220px; overflow-y: auto; margin-bottom: 18px; }
   .comentario { padding: 12px 0; border-bottom: 1px solid var(--line); font-size: .88rem; font-weight: 300; line-height: 1.5; }
   .comentario:last-child { border-bottom: none; }
@@ -152,6 +159,10 @@
   <div class="panel">
     <div class="stars" id="stars"></div>
     <div class="avgLine" id="avgLine"></div>
+    <a class="whatsapp-cta" href="https://wa.me/34630714751?text=Hola%20Chema%2C%20he%20visto%20estas%20fotos%20de%20Plasmalia%20y%20me%20gustar%C3%ADa%20pedir%20informaci%C3%B3n%20para%20mi%20boda" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.5A10 10 0 1012 2zm5.8 14.2c-.2.6-1.4 1.2-2 1.3-.5.1-1.1.1-1.8-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.8-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.1.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.7-.8c.2-.3.4-.2.7-.1l1.6.8c.2.1.4.2.5.3.1.2.1.9-.1 1.5z"/></svg>
+      <span>¿Te casas? Contacta con Chema Vela</span>
+    </a>
     <div class="comentarios" id="comentarios"></div>
     <div class="form-comentario">
       <input id="comNombre" type="text" placeholder="Tu nombre" maxlength="60" />
