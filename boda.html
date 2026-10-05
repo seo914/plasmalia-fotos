@@ -185,6 +185,7 @@ function slugFromPath() {
 const slug = slugFromPath();
 let photos = [];
 let interacciones = {};
+let heroKeys = [];
 let current = 0;
 
 async function intentarCargar() {
@@ -217,6 +218,7 @@ function mostrarGaleria(data) {
   document.getElementById('galeria').style.display = 'block';
   document.getElementById('nombreNovios').textContent = data.nombre;
   const reviewBtn = document.getElementById('reviewBtn');
+  heroKeys = data.heroKeys || [];
   if (data.reviewLink) reviewBtn.href = data.reviewLink;
   else reviewBtn.style.display = 'none';
 
@@ -233,11 +235,20 @@ function mostrarGaleria(data) {
 function pintarHero() {
   const cont = document.getElementById('heroSlideshow');
   const overlay = cont.querySelector('.hero-overlay');
-  const n = Math.min(10, photos.length);
-  if (n === 0) return;
-  const paso = photos.length / n;
-  for (let i = 0; i < n; i++) {
-    const p = photos[Math.floor(i * paso)];
+
+  let seleccion = [];
+  if (heroKeys.length) {
+    seleccion = heroKeys.map((k) => photos.find((p) => p.key === k)).filter(Boolean);
+  }
+  if (!seleccion.length) {
+    const n = Math.min(10, photos.length);
+    const paso = photos.length / n;
+    for (let i = 0; i < n; i++) seleccion.push(photos[Math.floor(i * paso)]);
+  }
+  if (!seleccion.length) return;
+
+  for (let i = 0; i < seleccion.length; i++) {
+    const p = seleccion[i];
     const div = document.createElement('div');
     div.className = 'slide' + (i === 0 ? ' active' : '');
     div.innerHTML = `<img src="${p.origUrl}" alt="">`;

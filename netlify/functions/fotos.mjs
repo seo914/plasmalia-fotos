@@ -27,7 +27,7 @@ export default async (req) => {
     origKey: p.origKey,
   }));
 
-  return new Response(JSON.stringify({ nombre: g.nombre, reviewLink: g.reviewLink, photos }), {
+  return new Response(JSON.stringify({ nombre: g.nombre, reviewLink: g.reviewLink, heroKeys: g.heroKeys || [], photos }), {
     headers: { "content-type": "application/json", "cache-control": "no-store" },
   });
 };
