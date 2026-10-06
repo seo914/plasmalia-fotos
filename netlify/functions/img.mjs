@@ -12,13 +12,20 @@ export default async (req) => {
   const slug = url.searchParams.get("slug");
   const key = url.searchParams.get("key");
   const filename = url.searchParams.get("filename");
-  if (!slug || !key || !key.startsWith(`${slug}/`)) {
+  if (!slug || !key) {
     return new Response("Bad request", { status: 400 });
   }
 
   const token = readCookie(req, cookieName(slug));
   if (!verifyToken(token, slug)) {
     return new Response("No autorizado", { status: 401 });
+  }
+
+  const galerias = getStore({ name: "galerias", consistency: "strong" });
+  const g = await galerias.get(slug, { type: "json" });
+  const pertenece = g && (g.photos || []).some((p) => p.thumbKey === key || p.origKey === key);
+  if (!pertenece) {
+    return new Response("No autorizado", { status: 403 });
   }
 
   const store = getStore("fotos");
