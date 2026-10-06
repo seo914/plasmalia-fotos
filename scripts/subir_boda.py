@@ -9,7 +9,7 @@ Uso:
     --fecha "12 de julio de 2026" \
     --password "ContraseñaParaLosNovios" \
     --review-link "https://g.page/r/CQFLR931l4HyEAE/review" \
-    --pin 8653d5f9
+    --pin TU_PIN_ADMIN
 
 Requisitos: exiftool y magick (ImageMagick) instalados (brew install exiftool imagemagick).
 
