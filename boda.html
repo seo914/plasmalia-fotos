@@ -97,6 +97,10 @@
   }
   .form-comentario button:hover { background: var(--plum); }
 
+  @media (hover: none) {
+    .grid a.dl, .grid .badge { opacity: 1; transform: none; }
+  }
+
   /* ---- footer ---- */
   footer { text-align: center; padding: 70px 24px 100px; border-top: 1px solid var(--line); margin-top: 20px; }
   footer p { margin: 0 0 28px; color: var(--ink-soft); font-size: .92rem; font-weight: 300; max-width: 420px; margin-left: auto; margin-right: auto; }
@@ -265,7 +269,10 @@ function pintarGrid() {
     fig.innerHTML = `<img src="${p.thumbUrl}" loading="lazy" alt="">` +
       badgeHtml(p.key) +
       `<a class="dl" href="${p.origUrl}" download title="Descargar"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg></a>`;
-    fig.querySelector('img').addEventListener('click', () => abrirLightbox(i));
+    fig.addEventListener('click', (e) => {
+      if (e.target.closest('a.dl')) return;
+      abrirLightbox(i);
+    });
     grid.appendChild(fig);
   });
 }
