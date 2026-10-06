@@ -47,6 +47,7 @@ export default async (req) => {
     }
     await store.setJSON(slug, {
       nombre: body.nombre,
+      fecha: body.fecha || null,
       passwordHash: hashPassword(body.password),
       reviewLink: body.reviewLink || null,
       photos: [],
@@ -69,12 +70,21 @@ export default async (req) => {
   }
 
   if (body.action === "actualizar") {
-    const { slug, nombre, reviewLink } = body;
+    const { slug, nombre, fecha, reviewLink } = body;
     const g = await store.get(slug, { type: "json" });
     if (!g) return new Response(JSON.stringify({ error: "galeria no existe" }), { status: 404 });
     if (nombre) g.nombre = nombre;
+    if (fecha !== undefined) g.fecha = fecha || null;
     if (reviewLink !== undefined) g.reviewLink = reviewLink || null;
     await store.setJSON(slug, g);
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  if (body.action === "borrar") {
+    const { slug } = body;
+    await store.delete(slug);
     return new Response(JSON.stringify({ ok: true }), {
       headers: { "content-type": "application/json" },
     });
