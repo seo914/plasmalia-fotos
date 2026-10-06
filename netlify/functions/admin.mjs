@@ -90,6 +90,15 @@ export default async (req) => {
     });
   }
 
+  if (body.action === "vaciar_interacciones") {
+    const { slug } = body;
+    const interacciones = getStore({ name: "interacciones", consistency: "strong" });
+    await interacciones.delete(slug);
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { "content-type": "application/json" },
+    });
+  }
+
   if (body.action === "reordenar") {
     const { slug, photos } = body;
     const g = await store.get(slug, { type: "json" });
