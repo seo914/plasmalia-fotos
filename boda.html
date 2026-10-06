@@ -137,7 +137,7 @@
       <div class="fecha" id="fechaBoda"></div>
     </div>
   </div>
-  <p class="intro">Pulsa en cualquier fotografía para verla en grande, valorarla y dejar un comentario.</p>
+  <p class="intro" id="intro"></p>
   <div class="grid" id="grid"></div>
   <footer>
     <p>¿Os han gustado vuestras fotografías? Una reseña vuestra nos ayuda muchísimo a seguir contando historias de boda.</p>
@@ -213,6 +213,7 @@ function mostrarGaleria(data) {
   document.getElementById('galeria').style.display = 'block';
   document.getElementById('nombreNovios').textContent = data.nombre;
   document.getElementById('fechaBoda').textContent = data.fecha || '';
+  document.getElementById('intro').textContent = `Web privada de ${data.nombre}. Descarga, comparte y comenta los momentos en las fotos que te gusten.`;
   const reviewBtn = document.getElementById('reviewBtn');
   heroKeys = data.heroKeys || [];
   if (data.reviewLink) reviewBtn.href = data.reviewLink;
