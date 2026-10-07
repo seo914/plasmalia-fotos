@@ -12,14 +12,15 @@ export default async (req) => {
   const slug = url.searchParams.get("slug");
   if (!slug) return new Response(JSON.stringify({ error: "falta slug" }), { status: 400 });
 
-  const token = readCookie(req, cookieName(slug));
-  if (!verifyToken(token, slug)) {
-    return new Response(JSON.stringify({ error: "no autorizado" }), { status: 401 });
-  }
-
   const store = getStore("galerias");
   const g = await store.get(slug, { type: "json" });
   if (!g) return new Response(JSON.stringify({ error: "no existe" }), { status: 404 });
+
+  const token = readCookie(req, cookieName(slug));
+  if (!verifyToken(token, slug)) {
+    // Solo el nombre, para mostrarlo fijo en la pantalla de contraseña
+    return new Response(JSON.stringify({ error: "no autorizado", nombre: g.nombre }), { status: 401 });
+  }
 
   const photos = (g.photos || []).map((p) => ({
     filename: p.filename,

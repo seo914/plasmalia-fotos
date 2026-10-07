@@ -122,8 +122,8 @@
 
 <div id="gate">
   <div class="mark">Plasmalia</div>
-  <h1>Tus fotografías</h1>
-  <p>Introduce la contraseña que os ha dado Plasmalia para ver y descargar vuestras fotos.</p>
+  <h1 id="gateNombre">Tus fotografías</h1>
+  <p>Introduce la contraseña que os ha dado Plasmalia para ver y descargar las fotos.</p>
   <input id="password" type="password" placeholder="Contraseña" autocomplete="off" />
   <div id="gateError"></div>
   <button id="entrar" class="btn">Entrar</button>
@@ -190,6 +190,11 @@ async function intentarCargar() {
     await cargarInteracciones();
     mostrarGaleria(data);
     return true;
+  }
+  const d = await res.json().catch(() => ({}));
+  if (d.nombre) {
+    document.getElementById('gateNombre').textContent = d.nombre;
+    document.title = `${d.nombre} — Plasmalia`;
   }
   return false;
 }
