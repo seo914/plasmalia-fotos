@@ -35,6 +35,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 import urllib.request
 
 SITE = "https://plasmalia-fotos.netlify.app"
@@ -78,8 +79,14 @@ def subir_blob(pin, slug, kind, path):
         f"{SITE}/api/subir", data=data, method="POST",
         headers={"x-pin": pin, "x-slug": slug, "x-kind": kind, "content-type": "application/octet-stream"},
     )
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read())["key"]
+    for intento in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.loads(r.read())["key"]
+        except Exception:
+            if intento == 3:
+                raise
+            time.sleep(3 * (intento + 1))
 
 
 def confirmar(pin, slug, lote):
