@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { verifyToken, cookieName } from "./_token.mjs";
+import { verifyToken, cookieName, caducidad } from "./_token.mjs";
 
 function readCookie(req, name) {
   const header = req.headers.get("cookie") || "";
@@ -24,6 +24,9 @@ export default async (req) => {
   const galerias = getStore({ name: "galerias", consistency: "strong" });
   const g = await galerias.get(slug, { type: "json" });
   const pertenece = g && (g.photos || []).some((p) => p.thumbKey === key || p.origKey === key);
+  if (g && Date.now() > caducidad(g).getTime()) {
+    return new Response("Galería caducada", { status: 410 });
+  }
   if (!pertenece) {
     return new Response("No autorizado", { status: 403 });
   }

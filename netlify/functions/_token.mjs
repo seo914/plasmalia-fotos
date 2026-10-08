@@ -1,5 +1,14 @@
 import crypto from "node:crypto";
 
+export const DIAS_GALERIA = 90;
+
+// Fecha de caducidad: la guardada en la galería o, si no tiene, creado + DIAS_GALERIA
+export function caducidad(g) {
+  if (g.caduca) return new Date(g.caduca);
+  const base = g.creado ? new Date(g.creado) : new Date();
+  return new Date(base.getTime() + DIAS_GALERIA * 864e5);
+}
+
 function secret() {
   const s = Netlify.env.get("GALLERY_SECRET");
   if (!s) throw new Error("falta GALLERY_SECRET");

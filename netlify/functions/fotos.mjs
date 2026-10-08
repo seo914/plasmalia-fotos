@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { verifyToken, cookieName } from "./_token.mjs";
+import { verifyToken, cookieName, caducidad } from "./_token.mjs";
 
 function readCookie(req, name) {
   const header = req.headers.get("cookie") || "";
@@ -16,6 +16,11 @@ export default async (req) => {
   const g = await store.get(slug, { type: "json" });
   if (!g) return new Response(JSON.stringify({ error: "no existe" }), { status: 404 });
 
+  const caduca = caducidad(g);
+  if (Date.now() > caduca.getTime()) {
+    return new Response(JSON.stringify({ error: "caducada", nombre: g.nombre }), { status: 410 });
+  }
+
   const token = readCookie(req, cookieName(slug));
   if (!verifyToken(token, slug)) {
     // Solo el nombre, para mostrarlo fijo en la pantalla de contraseña
@@ -28,7 +33,7 @@ export default async (req) => {
     origKey: p.origKey,
   }));
 
-  return new Response(JSON.stringify({ nombre: g.nombre, fecha: g.fecha || null, reviewLink: g.reviewLink, heroKeys: g.heroKeys || [], photos }), {
+  return new Response(JSON.stringify({ nombre: g.nombre, fecha: g.fecha || null, reviewLink: g.reviewLink, caduca: caduca.toISOString(), heroKeys: g.heroKeys || [], photos }), {
     headers: { "content-type": "application/json", "cache-control": "no-store" },
   });
 };

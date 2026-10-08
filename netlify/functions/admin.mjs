@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { hashPassword, slugify } from "./_token.mjs";
+import { hashPassword, slugify, DIAS_GALERIA } from "./_token.mjs";
 
 function checkPin(pin) {
   const real = Netlify.env.get("FOTOS_ADMIN_PIN");
@@ -52,6 +52,7 @@ export default async (req) => {
       reviewLink: body.reviewLink || null,
       photos: [],
       creado: new Date().toISOString(),
+      caduca: new Date(Date.now() + DIAS_GALERIA * 864e5).toISOString(),
     });
     return new Response(JSON.stringify({ slug }), {
       headers: { "content-type": "application/json" },
@@ -70,12 +71,13 @@ export default async (req) => {
   }
 
   if (body.action === "actualizar") {
-    const { slug, nombre, fecha, reviewLink } = body;
+    const { slug, nombre, fecha, reviewLink, caduca } = body;
     const g = await store.get(slug, { type: "json" });
     if (!g) return new Response(JSON.stringify({ error: "galeria no existe" }), { status: 404 });
     if (nombre) g.nombre = nombre;
     if (fecha !== undefined) g.fecha = fecha || null;
     if (reviewLink !== undefined) g.reviewLink = reviewLink || null;
+    if (caduca) g.caduca = new Date(caduca).toISOString();
     await store.setJSON(slug, g);
     return new Response(JSON.stringify({ ok: true }), {
       headers: { "content-type": "application/json" },
